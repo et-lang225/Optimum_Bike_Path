@@ -1,1 +1,31 @@
+river_file = "USA_Rivers_and_Streams.geojson"
+with open(river_file, 'r') as f:
+    rivers = json.load(f)
 
+min_lat = min(BR_houseclusters['Latitude'])-0.01
+max_lat = max(BR_houseclusters['Latitude'])+0.01
+min_lon = min(BR_houseclusters['Longitude'])-0.01
+max_lon = max(BR_houseclusters['Longitude'])+0.01
+rivers_box = []
+seen_features = set()
+for r in rivers['features']:
+    for c in r['geometry']['coordinates']:
+        if min_lat <= c[1] <= max_lat and min_lon <= c[0] <= max_lon:
+            if r['properties']['OBJECTID'] not in seen_features:  # Use a unique identifier
+                    rivers_box.append(r)
+                    seen_features.add(r['properties']['OBJECTID'])
+
+river_network = {'start': [], 'end': []}
+for r in rivers_box:
+    coords = r['geometry']['coordinates']
+    for i in range(len(coords) - 1):
+        start = (coords[i][1], coords[i][0])
+        end = (coords[i + 1][1], coords[i + 1][0])
+        river_network['start'].append(end)
+        river_network['end'].append(start)
+        if i > 0:
+            start = (coords[i][1], coords[i][0])
+            end = (coords[i - 1][1], coords[i - 1][0])
+            river_network['start'].append(end)
+            river_network['end'].append(start)
+river_network = pd.DataFrame(river_network)
