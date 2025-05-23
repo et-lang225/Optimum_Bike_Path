@@ -24,9 +24,12 @@ def find_river_path(row):
     if row['path'][-1] != end:
         while row['path'][-1] != end:
             path_point = row['path'][-1]
-            index = fast_find_nearest(river_network[river_network['start']==path_point]['end'],end)
+            path_prev = row['path'][0:-1]
+            mask = (river_network['start'] == path_point) & (~river_network['end'].isin(path_prev))
+            index = fast_find_nearest(river_network[mask]['end'],end)
             row['path'].append(river_network.iloc[index[0]]['start'])
     return row['path']
 
 house_work_pairs['route_start'] = house_work_pairs.apply(find_river_start, axis=1)
 house_work_pairs['route_end'] = house_work_pairs.apply(find_river_end, axis=1)
+
