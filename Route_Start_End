@@ -3,12 +3,18 @@ def find_nearest(series, target_coord):
     min_distance = distances.min()
     return distances[distances == min_distance].index.tolist()
 
+def fast_find_nearest(series, target_coord):
+    arr = np.array(series.tolist())
+    dists = np.sqrt((arr[:,0] - target_coord[0])**2 + (arr[:,1] - target_coord[1])**2)
+    min_idx = np.argmin(dists)
+    return [series.index[min_idx]]
+
 def find_river_start(row):
-    house_index = find_nearest(river_network['start'], row['house_coords'])
+    house_index = fast_find_nearest(river_network['start'], row['house_coords'])
     return river_network.iloc[house_index]['start']
 
 def find_river_end(row):
-    work_index = find_nearest(river_network['end'], row['work_coords'])
+    work_index = fast_find_nearest(river_network['end'], row['work_coords'])
     return river_network.iloc[work_index]['end']
 
 def find_river_path(row):
@@ -18,8 +24,9 @@ def find_river_path(row):
     if row['path'][-1] != end:
         while row['path'][-1] != end:
             path_point = row['path'][-1]
-            index = find_nearest(river_network[river_network['start']==path_point]['end'],end)
+            index = fast_find_nearest(river_network[river_network['start']==path_point]['end'],end)
             row['path'].append(river_network.iloc[index[0]]['start'])
     return row['path']
 
-house_work_pairs['route_start'] = house_work_pairs.apply(lambda row: find_river_start(row), axis=1)
+house_work_pairs['route_start'] = house_work_pairs.apply(find_river_start, axis=1)
+house_work_pairs['route_end'] = house_work_pairs.apply(find_river_end, axis=1)
