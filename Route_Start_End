@@ -1,0 +1,25 @@
+def find_nearest(series, target_coord):
+    distances = series.apply(lambda coord: geodesic(coord, target_coord).miles)
+    min_distance = distances.min()
+    return distances[distances == min_distance].index.tolist()
+
+def find_river_start(row):
+    house_index = find_nearest(river_network['start'], row['house_coords'])
+    return river_network.iloc[house_index]['start']
+
+def find_river_end(row):
+    work_index = find_nearest(river_network['end'], row['work_coords'])
+    return river_network.iloc[work_index]['end']
+
+def find_river_path(row):
+    start = find_river_start(row)
+    end = find_river_end(row)
+    row['path'].append(start)
+    if row['path'][-1] != end:
+        while row['path'][-1] != end:
+            path_point = row['path'][-1]
+            index = find_nearest(river_network[river_network['start']==path_point]['end'],end)
+            row['path'].append(river_network.iloc[index[0]]['start'])
+    return row['path']
+
+house_work_pairs['route_start'] = house_work_pairs.apply(lambda row: find_river_start(row), axis=1)
