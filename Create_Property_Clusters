@@ -1,0 +1,87 @@
+import json
+from geopy.distance import geodesic
+from shapely.geometry import Point, LineString
+from shapely.strtree import STRtree
+from shapely.wkt import loads 
+from shapely.geometry import MultiPolygon
+import pandas as pd
+import numpy as np
+
+#Get and filter raw data
+prop_tax_roll = pd.read_csv('https://data.brla.gov/api/views/myfc-nh6n/rows.csv?accessType=DOWNLOAD', sep=',', header=0)
+prop_tax_roll = prop_tax_roll.drop_duplicates(subset=['PROPERTY NUMBER'], keep='first')
+
+prop_location = pd.read_csv('https://data.brla.gov/api/views/ei2c-krsr/rows.csv?accessType=DOWNLOAD', sep=',', header=0)
+prop_location = prop_location.loc[prop_location['Property No'].notna()]
+prop_location = prop_location.drop_duplicates(subset=['GEOMETRY'], keep='first')
+
+# Convert the 'GEOMETRY' column to centroids
+prop_location['CENTROID'] = prop_location['GEOMETRY'].apply(lambda geom: loads(geom).centroid)
+
+# Extract latitude and longitude from the centroid
+prop_location['Latitude'] = prop_location['CENTROID'].apply(lambda point: point.y)
+prop_location['Longitude'] = prop_location['CENTROID'].apply(lambda point: point.x)
+
+LEFT = prop_location[['ID', 'Property No','OWNER', 'OWNER ADDRESS', 'OWNER CITY STATE ZIP', 'PHYSICAL ADDRESS', 'GEOMETRY', 'Latitude', 'Longitude']]
+RIGHT = prop_tax_roll[['PROPERTY NUMBER', 'TAXPAYER NAME', 'TAXPAYER ADDRESS', 'TAXPAYER SUBADDRESS', 'TAXPAYER CITY STATE ZIP','PHYSICAL ADDRESS', 'NO UNITS', 'STRUCTURE USE']]
+BRproperty = LEFT.merge(RIGHT, how='left', left_on='Property No', right_on='PROPERTY NUMBER')
+BRresidential = BRproperty.loc[BRproperty['STRUCTURE USE'].str.contains('RESIDENTIAL', na=False)]
+len(BRresidential)
+
+############Create clusters of houses and businesses############
+import geopandas as gpd
+from sklearn.cluster import DBSCAN
+from shapely.geometry import Point
+
+def BR_DBSCAN(data, episilon=0.5, min=5):
+    # create a GeoDataFrame from the data
+    gdf = gpd.GeoDataFrame(
+        data,
+        geometry=[Point(xy) for xy in zip(data['Longitude'], data['Latitude'])],
+        crs="EPSG:4326"  # WGS84 CRS
+    )
+
+    # Reproject to UTM (automatically selects the appropriate UTM zone)
+    gdf = gdf.to_crs(gdf.estimate_utm_crs())
+
+    # Extract UTM coordinates
+    coords = np.array([(geom.x, geom.y) for geom in gdf.geometry])
+
+    # Perform DBSCAN clustering with Euclidean metric
+    db = DBSCAN(eps=episilon, min_samples=min, metric='euclidean').fit(coords)
+
+    # Add cluster labels to the original data
+    data['Cluster'] = db.labels_
+
+    return data
+
+House_Clusters = BR_DBSCAN(BRresidential, episilon=250, min=5)
+BR_houseclusters = House_Clusters.groupby('Cluster').agg({'Latitude': 'mean', 'Longitude': 'mean', 'NO UNITS': 'sum'}).reset_index()
+
+BRcommercial = BRproperty.loc[BRproperty['STRUCTURE USE'].str.contains('COMMERCIAL', na=False)]
+Work_Clusters = BR_DBSCAN(BRcommercial, episilon=150, min=5)
+BRworkclusters = Work_Clusters.groupby('Cluster').agg({'Latitude': 'mean', 'Longitude': 'mean', 'NO UNITS': 'sum'}).reset_index()
+
+house_work_pairs = BR_houseclusters.merge(
+    BRworkclusters,
+    how='cross',
+    suffixes=('_house', '_work')
+)
+house_work_pairs['house_coords'] = house_work_pairs.apply(lambda row: (row['Latitude_house'], row['Longitude_house']), axis=1)
+house_work_pairs['work_coords'] = house_work_pairs.apply(lambda row: (row['Latitude_work'], row['Longitude_work']), axis=1)
+
+def haversine_distance(row):
+    return geodesic(row['house_coords'], row['work_coords']).miles
+
+house_work_pairs['Distance'] = house_work_pairs.apply(haversine_distance, axis=1)
+
+# Step 3: Filter pairs where the distance is greater than 10 miles
+house_work_pairs = house_work_pairs[house_work_pairs['Distance'] <= 10]
+
+# Resulting dataframe: filtered_pairs
+house_work_pairs.reset_index(drop=True, inplace=True)
+
+house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
+
+
+
