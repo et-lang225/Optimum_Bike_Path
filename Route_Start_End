@@ -18,8 +18,8 @@ def find_river_end(row):
     return river_network.iloc[work_index]['end']
 
 def find_river_path(row):
-    start = find_river_start(row)
-    end = find_river_end(row)
+    start = row['route_start']
+    end = row['route_end']
     row['path'].append(start)
     if row['path'][-1] != end:
         while row['path'][-1] != end:
