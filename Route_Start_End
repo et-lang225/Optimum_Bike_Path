@@ -11,11 +11,11 @@ def fast_find_nearest(series, target_coord):
 
 def find_river_start(row):
     house_index = fast_find_nearest(river_network['start'], row['house_coords'])
-    return river_network.iloc[house_index]['start']
+    return river_network['start'].iloc[house_index]
 
 def find_river_end(row):
     work_index = fast_find_nearest(river_network['end'], row['work_coords'])
-    return river_network.iloc[work_index]['end']
+    return river_network['end'].iloc[work_index]
 
 def find_river_path(row):
     start = row['route_start']
