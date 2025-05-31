@@ -33,3 +33,4 @@ def find_river_path(row):
 house_work_pairs['route_start'] = house_work_pairs.apply(find_river_start, axis=1)
 house_work_pairs['route_end'] = house_work_pairs.apply(find_river_end, axis=1)
 
+#after some trouble shooting find river path seems to be working but I have to double check that certain LinePaths are connected. I am missing connections in the network graph that should be there
