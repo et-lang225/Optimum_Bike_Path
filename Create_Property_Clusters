@@ -83,5 +83,5 @@ house_work_pairs.reset_index(drop=True, inplace=True)
 
 house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
 
-
+house_work_pairs = house_work_pairs[(house_work_pairs['Latitude_house'] < 30.51) & (house_work_pairs['Latitude_work'] < 30.51)].reset_index(drop=True)
 
