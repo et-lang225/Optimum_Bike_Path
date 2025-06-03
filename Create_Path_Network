@@ -15,17 +15,30 @@ for r in rivers['features']:
                     rivers_box.append(r)
                     seen_features.add(r['properties']['OBJECTID'])
 
-river_network = {'start': [], 'end': []}
+river_network = {'start': [], 'end': [], 'end_lat': [], 'end_lon': []}
 for r in rivers_box:
     coords = r['geometry']['coordinates']
-    for i in range(len(coords) - 1):
-        start = (coords[i][1], coords[i][0])
-        end = (coords[i + 1][1], coords[i + 1][0])
-        river_network['start'].append(end)
-        river_network['end'].append(start)
+    for i in range(len(coords)):
         if i > 0:
             start = (coords[i][1], coords[i][0])
             end = (coords[i - 1][1], coords[i - 1][0])
             river_network['start'].append(end)
             river_network['end'].append(start)
+            river_network['end_lat'].append(start[0])
+            river_network['end_lon'].append(start[1])
+            river_network['start'].append(start)
+            river_network['end'].append(end)
+            river_network['end_lat'].append(end[0])
+            river_network['end_lon'].append(end[1])
+        elif i==0:
+            start = (coords[i][1], coords[i][0])
+            end = (coords[i + 1][1], coords[i + 1][0])
+            river_network['start'].append(end)
+            river_network['end'].append(start)
+            river_network['end_lat'].append(start[0])
+            river_network['end_lon'].append(start[1])
+            river_network['start'].append(start)
+            river_network['end'].append(end)
+            river_network['end_lat'].append(end[0])
+            river_network['end_lon'].append(end[1])
 river_network = pd.DataFrame(river_network)
