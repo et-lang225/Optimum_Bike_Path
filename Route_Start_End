@@ -21,16 +21,21 @@ def find_river_path(row):
     start = row['route_start']
     end = row['route_end']
     row['path'].append(start)
-    if row['path'][-1] != end:
-        while row['path'][-1] != end:
-            path_point = row['path'][-1]
-            path_prev = row['path'][0:-1]
-            mask = (river_network['start'] == path_point) & (~river_network['end'].isin(path_prev))
-            index = fast_find_nearest(river_network[mask]['end'],end)
-            row['path'].append(river_network.iloc[index[0]]['start'])
+    while row['path'][-1] != end:
+        path_point = row['path'][-1]
+        path_prev = row['path'][0:-1]
+        if len(test_df['path'][0]) == 1:
+            if test_df['route_start'][0][1] < test_df['route_end'][0][1]:
+                mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (river_network['end_lon'] > test_df['route_start'][0][1])
+            elif test_df['route_start'][0][1] > test_df['route_end'][0][1]:
+                mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (river_network['end_lon'] < test_df['route_start'][0][1])
+        else:
+            mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev))
+        index = fast_find_nearest(river_network[mask]['end'],end)
+        row['path'].append(river_network.iloc[index[0]]['end'])
     return row['path']
 
 house_work_pairs['route_start'] = house_work_pairs.apply(find_river_start, axis=1)
 house_work_pairs['route_end'] = house_work_pairs.apply(find_river_end, axis=1)
 
-#after some trouble shooting find river path seems to be working but I have to double check that certain LinePaths are connected. I am missing connections in the network graph that should be there
+# trying to troubleshoot the find_river_path function and I am having a difficult time with the path going the wrong way along a river until a dead end, might try to allow for that in the code then choose the best path
