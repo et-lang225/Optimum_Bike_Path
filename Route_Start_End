@@ -24,11 +24,11 @@ def find_river_path(row):
     while row['path'][-1] != end:
         path_point = row['path'][-1]
         path_prev = row['path'][0:-1]
-        if len(test_df['path'][0]) == 1:
-            if test_df['route_start'][0][1] < test_df['route_end'][0][1]:
-                mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (river_network['end_lon'] > test_df['route_start'][0][1])
+        if len(row['path']) == 1:
+            if row['route_start'][1] < row['route_end'][1]:
+                mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (river_network['end_lon'] > row['route_start'][1])
             elif test_df['route_start'][0][1] > test_df['route_end'][0][1]:
-                mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (river_network['end_lon'] < test_df['route_start'][0][1])
+                mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (river_network['end_lon'] < row['route_start'][1])
         else:
             mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev))
         index = fast_find_nearest(river_network[mask]['end'],end)
