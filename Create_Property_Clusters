@@ -15,10 +15,8 @@ prop_location = pd.read_csv('https://data.brla.gov/api/views/ei2c-krsr/rows.csv?
 prop_location = prop_location.loc[prop_location['Property No'].notna()]
 prop_location = prop_location.drop_duplicates(subset=['GEOMETRY'], keep='first')
 
-# Convert the 'GEOMETRY' column to centroids
 prop_location['CENTROID'] = prop_location['GEOMETRY'].apply(lambda geom: loads(geom).centroid)
 
-# Extract latitude and longitude from the centroid
 prop_location['Latitude'] = prop_location['CENTROID'].apply(lambda point: point.y)
 prop_location['Longitude'] = prop_location['CENTROID'].apply(lambda point: point.x)
 
@@ -34,7 +32,6 @@ from sklearn.cluster import DBSCAN
 from shapely.geometry import Point
 
 def BR_DBSCAN(data, episilon=0.5, min=5):
-    # create a GeoDataFrame from the data
     gdf = gpd.GeoDataFrame(
         data,
         geometry=[Point(xy) for xy in zip(data['Longitude'], data['Latitude'])],
@@ -43,16 +40,9 @@ def BR_DBSCAN(data, episilon=0.5, min=5):
 
     # Reproject to UTM (automatically selects the appropriate UTM zone)
     gdf = gdf.to_crs(gdf.estimate_utm_crs())
-
-    # Extract UTM coordinates
     coords = np.array([(geom.x, geom.y) for geom in gdf.geometry])
-
-    # Perform DBSCAN clustering with Euclidean metric
     db = DBSCAN(eps=episilon, min_samples=min, metric='euclidean').fit(coords)
-
-    # Add cluster labels to the original data
     data['Cluster'] = db.labels_
-
     return data
 
 House_Clusters = BR_DBSCAN(BRresidential, episilon=250, min=5)
@@ -75,10 +65,8 @@ def haversine_distance(row):
 
 house_work_pairs['Distance'] = house_work_pairs.apply(haversine_distance, axis=1)
 
-# Step 3: Filter pairs where the distance is greater than 10 miles
 house_work_pairs = house_work_pairs[house_work_pairs['Distance'] <= 10]
 
-# Resulting dataframe: filtered_pairs
 house_work_pairs.reset_index(drop=True, inplace=True)
 
 house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
