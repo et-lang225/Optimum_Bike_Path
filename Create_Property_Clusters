@@ -1,11 +1,12 @@
 import json
-from geopy.distance import geodesic
-from shapely.geometry import Point, LineString
-from shapely.strtree import STRtree
-from shapely.wkt import loads 
-from shapely.geometry import MultiPolygon
 import pandas as pd
 import numpy as np
+from shapely.wkt import loads  
+import geopandas as gpd
+from sklearn.cluster import DBSCAN
+from shapely.geometry import Point
+from geopy.distance import geodesic
+import folium
 
 #Get and filter raw data
 prop_tax_roll = pd.read_csv('https://data.brla.gov/api/views/myfc-nh6n/rows.csv?accessType=DOWNLOAD', sep=',', header=0)
