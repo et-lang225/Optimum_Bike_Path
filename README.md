@@ -1,9 +1,9 @@
 # Optimum_Bike_Path
-Optimizing the most efficient bike path in Baton Rouge from residential to business areas.
-Data sources: \n
-River and stream line paths - https://hub.arcgis.com/datasets/esri::usa-rivers-and-streams/explore \n
-East Baton Rouge Parish Tax Parcels - https://catalog.data.gov/dataset/tax-parcel-52918 \n
-East Baton Rouge Parish Tax Roll - https://catalog.data.gov/dataset/ebrp-tax-roll \n
+Optimizing the most efficient bike path in Baton Rouge from residential to business areas.  
+Data sources:  
+River and stream line paths - https://hub.arcgis.com/datasets/esri::usa-rivers-and-streams/explore  
+East Baton Rouge Parish Tax Parcels - https://catalog.data.gov/dataset/tax-parcel-52918  
+East Baton Rouge Parish Tax Roll - https://catalog.data.gov/dataset/ebrp-tax-roll  
 
 To run code in order use:
 1. Create_Property_Clusters
