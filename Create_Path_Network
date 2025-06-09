@@ -36,3 +36,7 @@ for r in rivers_box:
 river_network['start'] = [(round(t[0], 6), round(t[1], 6)) for t in river_network['start']]
 river_network['end'] = [(round(t[0], 6), round(t[1], 6)) for t in river_network['end']]
 river_network = pd.DataFrame(river_network)
+
+def haversine(row):
+    return geodesic(row['start'], row['end']).miles
+river_network['distance'] = river_network.apply(haversine, axis=1)
