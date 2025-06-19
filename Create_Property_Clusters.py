@@ -32,32 +32,22 @@ import geopandas as gpd
 from sklearn.cluster import DBSCAN
 from shapely.geometry import Point
 
-def BR_DBSCAN(data, episilon=0.5, min=5):
-    gdf = gpd.GeoDataFrame(
-        data,
-        geometry=[Point(xy) for xy in zip(data['Longitude'], data['Latitude'])],
-        crs="EPSG:4326"  # WGS84 CRS
-    )
-
-    # Reproject to UTM (automatically selects the appropriate UTM zone)
+def BR_DBSCAN(data, epsilon=0.5, min_samples=5):
+    gdf = gpd.GeoDataFrame(data,geometry=[Point(xy) for xy in zip(data['Longitude'], data['Latitude'])],crs="EPSG:4326")
     gdf = gdf.to_crs(gdf.estimate_utm_crs())
     coords = np.array([(geom.x, geom.y) for geom in gdf.geometry])
-    db = DBSCAN(eps=episilon, min_samples=min, metric='euclidean').fit(coords)
+    db = DBSCAN(eps=epsilon, min_samples=min_samples, metric='euclidean').fit(coords)
     data['Cluster'] = db.labels_
     return data
 
-House_Clusters = BR_DBSCAN(BRresidential, episilon=250, min=5)
+House_Clusters = BR_DBSCAN(BRresidential, epsilon=250, min_samples=5)
 BR_houseclusters = House_Clusters.groupby('Cluster').agg({'Latitude': 'mean', 'Longitude': 'mean', 'NO UNITS': 'sum'}).reset_index()
 
 BRcommercial = BRproperty.loc[BRproperty['STRUCTURE USE'].str.contains('COMMERCIAL', na=False)]
-Work_Clusters = BR_DBSCAN(BRcommercial, episilon=150, min=5)
+Work_Clusters = BR_DBSCAN(BRcommercial, epsilon=150, min_samples=5)
 BRworkclusters = Work_Clusters.groupby('Cluster').agg({'Latitude': 'mean', 'Longitude': 'mean', 'NO UNITS': 'sum'}).reset_index()
 
-house_work_pairs = BR_houseclusters.merge(
-    BRworkclusters,
-    how='cross',
-    suffixes=('_house', '_work')
-)
+house_work_pairs = BR_houseclusters.merge(BRworkclusters,how='cross',suffixes=('_house', '_work'))
 house_work_pairs['house_coords'] = house_work_pairs.apply(lambda row: (row['Latitude_house'], row['Longitude_house']), axis=1)
 house_work_pairs['work_coords'] = house_work_pairs.apply(lambda row: (row['Latitude_work'], row['Longitude_work']), axis=1)
 
@@ -72,5 +62,4 @@ house_work_pairs.reset_index(drop=True, inplace=True)
 
 house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
 
-house_work_pairs = house_work_pairs[(house_work_pairs['Latitude_house'] < 30.51) & (house_work_pairs['Latitude_work'] < 30.51)].reset_index(drop=True)
-
+house_work_pairs = house_work_pairs.loc[(house_work_pairs['Latitude_house'] < 30.51) & (house_work_pairs['Latitude_work'] < 30.51)].reset_index(drop=True)
