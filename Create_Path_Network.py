@@ -3,7 +3,7 @@ from Create_Property_Clusters import BR_houseclusters
 import pandas as pd
 from geopy.distance import geodesic
 
-river_file = "https://drive.google.com/uc?export=download&id=1XddgLDrL2PwO7XpQouA4jHuluTUCcsER"
+river_file = "USA_Rivers_and_Streams.geojson"
 with open(river_file, 'r') as f:
     rivers = json.load(f)
 
