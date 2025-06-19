@@ -29,7 +29,7 @@ def optimum_path(df):
 
 r = optimum_path(house_work_pairs)
 
-house_work_pairs.iloc[[r-1]].to_csv('Optimum_Path.tsv', sep='\t', index=False, header=True)
+house_work_pairs.iloc[[r]].to_csv('Optimum_Path.tsv', sep='\t', index=False, header=True)
 
 # I restricted the distance to a mile or greater just give the city a better idea of what area could use a bike path the most
 # This resulted in a bike path along Dawson's Creek in a heavily populated area of Baton Rouge
