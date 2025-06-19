@@ -1,7 +1,10 @@
-def find_nearest(series, target_coord):
-    distances = series.apply(lambda coord: geodesic(coord, target_coord).miles)
-    min_distance = distances.min()
-    return distances[distances == min_distance].index.tolist()
+from Create_Property_Clusters import house_work_pairs
+from Create_Path_Network import river_network
+import numpy as np
+import pandas as pd
+from geopy.distance import geodesic
+from collections import defaultdict
+import heapq
 
 def fast_find_nearest(series, target_coord):
     arr = np.array(series.tolist())
@@ -11,11 +14,11 @@ def fast_find_nearest(series, target_coord):
 
 def find_river_start(row):
     house_index = fast_find_nearest(river_network['start'], row['house_coords'])
-    return river_network['start'].iloc[house_index]
+    return river_network['start'].iloc[house_index[0]]
 
 def find_river_end(row):
     work_index = fast_find_nearest(river_network['end'], row['work_coords'])
-    return river_network['end'].iloc[work_index]
+    return river_network['end'].iloc[work_index[0]]
 
 house_work_pairs['route_start'] = house_work_pairs.apply(find_river_start, axis=1)
 house_work_pairs['route_end'] = house_work_pairs.apply(find_river_end, axis=1)
@@ -23,35 +26,33 @@ house_work_pairs['route_end'] = house_work_pairs.apply(find_river_end, axis=1)
 # I know this works but it is extremely slow and defeats the purpose of storing these routes in a dataframe.
 # However, if I restricted the df to a subset of rows, I was able to use this code to troubleshoot a lot of issues such as creating multiple paths to choose from (such as a Dijkstra algorithm)...
 # and finding out that I had to round GPS coordinates to 6 decimal places in order to make two connecting line segments have identical coordinates. 
-for r in range(len(house_work_pairs)):
-    house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
-    start = house_work_pairs['route_start'][r]
-    end = house_work_pairs['route_end'][r]
-    route = []
-    path_dict = {1:[], 2:[], 3:[]}
-    for i in list(path_dict.keys()):
-        path_dict[i].append(start)
-        exlcude_list = [item for tup in path_dict.values() for item in tup]
-        while path_dict[i][-1] != end:
-            path_point = path_dict[i][-1]
-            path_prev = path_dict[i][0:-1]
-            mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (~river_network['end'].isin(exlcude_list))
-            if not mask.any():
-                break
-            index = fast_find_nearest(river_network[mask]['end'],end)
-            path_dict[i].append(river_network.iloc[index[0]]['end'])
-        exlcude_list = [item for tup in path_dict.values() for item in tup]
-        if end in path_dict[i]:
-            route = path_dict[i]
-    house_work_pairs['path'][r] = route
+# for r in range(len(house_work_pairs)):
+#     house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
+#     start = house_work_pairs['route_start'][r]
+#     end = house_work_pairs['route_end'][r]
+#     route = []
+#     path_dict = {1:[], 2:[], 3:[]}
+#     for i in list(path_dict.keys()):
+#         path_dict[i].append(start)
+#         exlcude_list = [item for tup in path_dict.values() for item in tup]
+#         while path_dict[i][-1] != end:
+#             path_point = path_dict[i][-1]
+#             path_prev = path_dict[i][0:-1]
+#             mask = (river_network['start'] == path_point) & (river_network['end'] != path_point) & (~river_network['end'].isin(path_prev)) & (~river_network['end'].isin(exlcude_list))
+#             if not mask.any():
+#                 break
+#             index = fast_find_nearest(river_network[mask]['end'],end)
+#             path_dict[i].append(river_network.iloc[index[0]]['end'])
+#         exlcude_list = [item for tup in path_dict.values() for item in tup]
+#         if end in path_dict[i]:
+#             route = path_dict[i]
+#     house_work_pairs['path'][r] = route
 
 # The code I found to work came from unpacking what networkx does behind the scenes (below)
 # basically the key is to create an adjaceny list and a tuple of distance and node queue of all possible paths, which I thought would acually make it slower but it does not
 # I thought I could take the minimum distance of the end node to the node adjacent to the next node in the list (beginning with the start coordinate) and it would lead to the shortest path
 # many problems arose with that idea and the code became more and more complicated
 house_work_pairs['path'] = [[] for _ in range(len(house_work_pairs))]
-from collections import defaultdict
-import heapq
 
 adj_weighted = defaultdict(list)
 for idx, row in river_network.iterrows():
