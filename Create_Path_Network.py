@@ -20,6 +20,15 @@ for r in rivers['features']:
                     rivers_box.append(r)
                     seen_features.add(r['properties']['OBJECTID'])
 
+Rivers_geojson = {
+"type": "FeatureCollection",
+"name": "7a3b29fe-1683-4146-a598-65ab5249faac2020328-1-1e59yc.zyxk1",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": rivers_box }
+
+with open('Rivers.geojson', 'w') as f:
+    json.dump(Rivers_geojson, f)
+
 river_network = {'start': [], 'end': []}
 for r in rivers_box:
     coords = r['geometry']['coordinates']

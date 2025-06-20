@@ -1,6 +1,7 @@
 import pandas as pd
 from Route_Start_End import house_work_pairs
 from Create_Path_Network import river_network
+import json
 import folium
 
 river_dist_dict = {
@@ -29,7 +30,23 @@ def optimum_path(df):
 
 r = optimum_path(house_work_pairs)
 
-house_work_pairs.iloc[[r]].to_csv('Optimum_Path.tsv', sep='\t', index=False, header=True)
+export_path = [(coord[1], coord[0]) for coord in house_work_pairs.at[r,'path']]
+
+path_geojson = {
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": export_path
+            },
+            "properties": {}
+        }
+    ]
+}
+with open('Optimum_Path.geojson', 'w') as f:
+    json.dump(path_geojson, f)
 
 # I restricted the distance to a mile or greater just give the city a better idea of what area could use a bike path the most
 # This resulted in a bike path along Dawson's Creek in a heavily populated area of Baton Rouge

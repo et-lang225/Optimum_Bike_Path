@@ -9,10 +9,10 @@ from geopy.distance import geodesic
 import folium
 
 #Get and filter raw data
-prop_tax_roll = pd.read_csv('https://data.brla.gov/api/views/myfc-nh6n/rows.csv?accessType=DOWNLOAD', sep=',', header=0)
+prop_tax_roll = pd.read_csv('https://data.brla.gov/api/views/myfc-nh6n/rows.csv?accessType=DOWNLOAD', sep=',', header=0) # 'https://data.brla.gov/api/views/myfc-nh6n/rows.csv?accessType=DOWNLOAD'
 prop_tax_roll = prop_tax_roll.drop_duplicates(subset=['PROPERTY NUMBER'], keep='first')
 
-prop_location = pd.read_csv('https://data.brla.gov/api/views/ei2c-krsr/rows.csv?accessType=DOWNLOAD', sep=',', header=0)
+prop_location = pd.read_csv('https://data.brla.gov/api/views/ei2c-krsr/rows.csv?accessType=DOWNLOAD', sep=',', header=0) # 'https://data.brla.gov/api/views/ei2c-krsr/rows.csv?accessType=DOWNLOAD'
 prop_location = prop_location.loc[prop_location['Property No'].notna()]
 prop_location = prop_location.drop_duplicates(subset=['GEOMETRY'], keep='first')
 
